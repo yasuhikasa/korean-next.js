@@ -1,9 +1,10 @@
 name: Update News
 
 on:
-  schedule:
-    # 毎日3回ニュースを更新（例: 8:00, 14:00, 20:00 UTC）
-    - cron: '0 8,14,20 * * *'
+  # 日本時間で8:00, 14:00, 20:00にニュースを更新
+  # schedule:
+  #   - cron: '0 23,5,11 * * *'
+
   workflow_dispatch: # 手動トリガーを有効化
 
 jobs:
@@ -11,19 +12,40 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # リポジトリのクローン
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      # ニュースデータの取得
       - name: Fetch news data
         env:
           NEWS_API_KEY: ${{ secrets.NEWS_API_KEY }}
         run: |
           curl -s "https://newsapi.org/v2/everything?q=korea&apiKey=${NEWS_API_KEY}" > public/news.json
 
+      # コミットとプッシュ
       - name: Commit and push changes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # 必要なトークン
         run: |
           git config --local user.name "github-actions[bot]"
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add public/news.json
           git commit -m "Update news data"
           git push
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: fetch-news  # fetch-newsジョブの成功後に実行
+    steps:
+      # リポジトリのクローン
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Herokuへのデプロイ
+      - name: Deploy to Heroku
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: |
+          git remote add heroku https://git.heroku.com/your-heroku-app-name.git
+          git push heroku main
