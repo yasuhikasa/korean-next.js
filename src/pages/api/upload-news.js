@@ -16,7 +16,7 @@ export default async function handler(req, res) {
     }
 
     // NewsAPIからデータを取得
-    const apiUrl = `https://newsapi.org/v2/everything?q=korea&apiKey=${apiKey}`;
+    const apiUrl = `https://newsapi.org/v2/everything?q=korea&language=ja&apiKey=${apiKey}`;
     const response = await fetch(apiUrl);
     const data = await response.json();
 
