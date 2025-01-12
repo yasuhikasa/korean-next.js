@@ -1,0 +1,29 @@
+name: Update News
+
+on:
+  schedule:
+    # 毎日3回ニュースを更新（例: 8:00, 14:00, 20:00 UTC）
+    - cron: '0 8,14,20 * * *'
+  workflow_dispatch: # 手動トリガーを有効化
+
+jobs:
+  fetch-news:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Fetch news data
+        env:
+          NEWS_API_KEY: ${{ secrets.NEWS_API_KEY }}
+        run: |
+          curl -s "https://newsapi.org/v2/everything?q=korea&apiKey=${NEWS_API_KEY}" > public/news.json
+
+      - name: Commit and push changes
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/news.json
+          git commit -m "Update news data"
+          git push
