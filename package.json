@@ -9,13 +9,15 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "next": "^13.4.10",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "next": "^13.4.10"
+    "react-dom": "^18.2.0"
   },
   "devDependencies": {
-    "eslint": "^8.53.0",
-    "eslint-config-next": "^13.4.10"
+    "eslint": "^8.57.1",
+    "eslint-config-next": "^13.4.10",
+    "eslint-plugin-react": "^7.37.3",
+    "globals": "^15.14.0"
   },
   "engines": {
     "node": "20.x",

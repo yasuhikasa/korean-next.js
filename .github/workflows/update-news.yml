@@ -1,98 +1,28 @@
-name: Update News
+name: Fetch and Store News
 
 on:
-  # 日本時間で8:00, 14:00, 20:00にニュースを更新（現在は手動実行のみ有効）
   # schedule:
-  #   - cron: '0 23,5,11 * * *'
-
-  workflow_dispatch: # 手動トリガーを有効化
+  #   - cron: '0 23,5,11 * * *' # 日本時間で8:00, 14:00, 20:00に実行
+  workflow_dispatch:
 
 jobs:
   fetch-news:
     runs-on: ubuntu-latest
 
     steps:
-      # リポジトリのクローン
-      - name: Checkout repository
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0 # フルクローンを実行し、すべての履歴を取得
-
       # ニュースデータの取得
       - name: Fetch news data
         env:
           NEWS_API_KEY: ${{ secrets.NEWS_API_KEY }}
         run: |
-          echo "Fetching news data..."
-          curl -s "https://newsapi.org/v2/everything?q=korea&apiKey=${NEWS_API_KEY}" > public/news.json
-          echo "News data fetched and saved to public/news.json."
+          curl -s "https://newsapi.org/v2/everything?q=korea&apiKey=${NEWS_API_KEY}" -o news.json
 
-      # リモートリポジトリを最新にする
-      - name: Pull latest changes
+      # APIルートにニュースをPOST
+      - name: Upload news to Firestore
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
         run: |
-          echo "Configuring Git..."
-          git config --local user.name "github-actions[bot]"
-          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          echo "Pulling latest changes from origin/main..."
-          git pull origin main --rebase || {
-            echo "Error: Failed to pull latest changes. Exiting with error."
-            exit 1
-          }
-          echo "Pull completed successfully."
-
-      # ログ出力: 現在のGitの状態を確認
-      - name: Debug git state
-        run: |
-          echo "=== Git Status ==="
-          git status
-          echo "=== Latest Commit ==="
-          git log -1
-          echo "=== Remote URLs ==="
-          git remote -v
-
-      # 差分がある場合のみコミットとプッシュ
-      - name: Commit and push changes
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          echo "Adding changes to staging..."
-          git add public/news.json
-          if ! git diff --cached --quiet; then
-            echo "Committing changes..."
-            git commit -m "Update news data"
-            echo "Pushing changes to origin/main..."
-            git push origin main || {
-              echo "Error: Failed to push changes. Exiting with error."
-              exit 1
-            }
-          else
-            echo "No changes to commit. Skipping push."
-          fi
-
-  deploy:
-    runs-on: ubuntu-latest
-    needs: fetch-news  # fetch-newsジョブの成功後に実行
-
-    steps:
-      # リポジトリのクローン
-      - name: Checkout repository
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      # Herokuへのデプロイ
-      - name: Deploy to Heroku
-        env:
-          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-        run: |
-          echo "Adding Heroku remote..."
-          git remote add heroku https://git.heroku.com/your-heroku-app-name.git
-          echo "https://heroku:${HEROKU_API_KEY}@git.heroku.com/your-heroku-app-name.git" > ~/.git-credentials
-          git config --global credential.helper store
-          echo "Pushing to Heroku..."
-          git push heroku main || {
-            echo "Error: Failed to push to Heroku. Exiting with error."
-            exit 1
-          }
+          curl -X POST \
+          -H "Content-Type: application/json" \
+          -d @news.json \
+          "${NEXT_PUBLIC_API_URL}/api/upload-news"

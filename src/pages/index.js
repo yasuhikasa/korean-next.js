@@ -1,20 +1,12 @@
-import fs from 'fs';
-import path from 'path';
-import styles from '../styles/Home.module.css';
-
 export async function getServerSideProps() {
-  const filePath = path.join(process.cwd(), 'public', 'news.json');
   let articles = [];
 
   try {
-    if (fs.existsSync(filePath)) {
-      const jsonData = fs.readFileSync(filePath, 'utf-8');
-      articles = JSON.parse(jsonData).articles || [];
-    } else {
-      console.warn('news.json does not exist. Returning empty articles.');
-    }
+    const response = await fetch('https://korean-front-c6081869e69e.herokuapp.com/api/news'); // 本番環境ではURLを変更
+    const data = await response.json();
+    articles = data.articles || [];
   } catch (error) {
-    console.error('Error reading news.json:', error);
+    console.error('Error fetching news:', error);
   }
 
   return {
@@ -26,30 +18,23 @@ export async function getServerSideProps() {
 
 export default function Home({ articles }) {
   return (
-    <div className={styles.container}>
-      <header className={styles.header}>
-        <h1 className={styles.h1}>韓国専門ニュース</h1>
-      </header>
-      <main className={styles.main}>
-        <h2 className={styles.h2}>最新ニュース</h2>
+    <div>
+      <h1>韓国専門ニュース</h1>
+      <main>
+        <h2>最新ニュース</h2>
         {articles.length > 0 ? (
-          <ul className={styles.ul}>
+          <ul>
             {articles.map((article, index) => (
-              <li key={index} className={styles.li}>
-                <a
-                  href={article.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={styles.a}
-                >
+              <li key={index}>
+                <a href={article.url} target="_blank" rel="noopener noreferrer">
                   <h3>{article.title}</h3>
-                  <p className={styles.p}>{article.description}</p>
+                  <p>{article.description}</p>
                 </a>
               </li>
             ))}
           </ul>
         ) : (
-          <p className={styles.p}>現在ニュースがありません。</p>
+          <p>現在ニュースがありません。</p>
         )}
       </main>
     </div>
