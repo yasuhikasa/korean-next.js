@@ -19,9 +19,8 @@ export async function getServerSideProps() {
   let articles = [];
 
   try {
-    // 朝日新聞のRSSフィードURLを例として使用
     console.log("Fetching RSS feed from: https://www.asahi.com/rss/asahi/newsheadlines.rdf");
-    const response = await fetch("https://www.asahi.com/rss/asahi/newsheadlines.rdf"); // 本番環境ではURLを変更
+    const response = await fetch("https://www.asahi.com/rss/asahi/newsheadlines.rdf");
     const xmlData = await response.text();
 
     console.log("RSS feed successfully fetched. Parsing RSS...");
@@ -29,26 +28,25 @@ export async function getServerSideProps() {
     // RSSフィードをJSONに変換
     const result = await parseXml(xmlData);
 
-    // ログでRSSフィードの構造を確認
+    // RDF形式のRSSフィードに対応
     console.log("Parsed RSS result:", result);
 
-    // RSSの構造にchannelが存在するかをチェック
-    if (result.rss && result.rss[0] && result.rss[0].channel) {
-      const items = result.rss[0].channel[0].item;
+    // RDFの場合、'rdf:RDF' の下に 'channel' があることを確認
+    if (result['rdf:RDF'] && result['rdf:RDF'][0] && result['rdf:RDF'][0].item) {
+      const items = result['rdf:RDF'][0].item;
 
-      console.log("Found channel with items. Filtering Korean news...");
+      console.log("Found items. Filtering Korean news...");
 
       // 韓国に関連するニュースをフィルタリング（タイトルに「韓国」を含むもの）
       articles = items.filter(item => item.title[0].includes("韓国"));
 
       console.log(`${articles.length} articles found related to "韓国".`);
     } else {
-      console.error("RSS feed structure is unexpected. 'channel' not found.");
-      throw new Error("RSSフィードの構造が期待と異なります。'channel'が存在しません。");
+      console.error("RDF feed structure is unexpected. 'rdf:RDF' or 'item' not found.");
+      throw new Error("RSSフィードの構造が期待と異なります。'rdf:RDF' または 'item'が存在しません。");
     }
   } catch (error) {
     console.error("Error fetching or parsing news:", error);
-    // エラーメッセージをユーザーに表示するために空の配列を返します。
     articles = [];
   }
 
