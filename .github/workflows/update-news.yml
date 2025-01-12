@@ -10,19 +10,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # ニュースデータの取得
-      - name: Fetch news data
-        env:
-          NEWS_API_KEY: ${{ secrets.NEWS_API_KEY }}
-        run: |
-          curl -s "https://newsapi.org/v2/everything?q=korea&apiKey=${NEWS_API_KEY}" -o news.json
-
-      # APIルートにニュースをPOST
+      # ニュースデータの取得とFirestore保存を実行
       - name: Upload news to Firestore
         env:
           NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
         run: |
           curl -X POST \
           -H "Content-Type: application/json" \
-          -d @news.json \
           "${NEXT_PUBLIC_API_URL}/api/upload-news"
