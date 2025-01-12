@@ -15,6 +15,8 @@ jobs:
       # リポジトリのクローン
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # フルクローンを実行し、すべての履歴を取得
 
       # ニュースデータの取得
       - name: Fetch news data
@@ -30,11 +32,14 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          echo "Configuring Git..."
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
           echo "Pulling latest changes from origin/main..."
-          if ! git pull origin main --rebase; then
-            echo "Error: Failed to pull latest changes from origin/main. Check for conflicts."
+          git pull origin main --rebase || {
+            echo "Error: Failed to pull latest changes. Exiting with error."
             exit 1
-          fi
+          }
           echo "Pull completed successfully."
 
       # ログ出力: 現在のGitの状態を確認
@@ -58,7 +63,10 @@ jobs:
             echo "Committing changes..."
             git commit -m "Update news data"
             echo "Pushing changes to origin/main..."
-            git push origin main
+            git push origin main || {
+              echo "Error: Failed to push changes. Exiting with error."
+              exit 1
+            }
           else
             echo "No changes to commit. Skipping push."
           fi
@@ -71,6 +79,8 @@ jobs:
       # リポジトリのクローン
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       # Herokuへのデプロイ
       - name: Deploy to Heroku
@@ -82,4 +92,7 @@ jobs:
           echo "https://heroku:${HEROKU_API_KEY}@git.heroku.com/your-heroku-app-name.git" > ~/.git-credentials
           git config --global credential.helper store
           echo "Pushing to Heroku..."
-          git push heroku main
+          git push heroku main || {
+            echo "Error: Failed to push to Heroku. Exiting with error."
+            exit 1
+          }
