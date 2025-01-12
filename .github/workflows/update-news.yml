@@ -45,11 +45,11 @@ jobs:
       # ログ出力: 現在のGitの状態を確認
       - name: Debug git state
         run: |
-          echo "Checking Git status..."
+          echo "=== Git Status ==="
           git status
-          echo "Checking latest commit..."
+          echo "=== Latest Commit ==="
           git log -1
-          echo "Checking remote URLs..."
+          echo "=== Remote URLs ==="
           git remote -v
 
       # 差分がある場合のみコミットとプッシュ
