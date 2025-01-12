@@ -10,7 +10,7 @@ export default async function handler(req, res) {
 
   try {
     // 環境変数からAPIキーを取得
-    const apiKey = process.env.NEWS_API_KEY;
+    const apiKey = process.env.NEXT_PUBLIC_NEWS_API_KEY;
     if (!apiKey) {
       return res.status(500).json({ error: "API key not found in environment variables." });
     }
