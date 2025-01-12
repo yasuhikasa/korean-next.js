@@ -28,17 +28,21 @@ export async function getServerSideProps() {
     // RSSフィードをJSONに変換
     const result = await parseXml(xmlData);
 
-    // RDF形式のRSSフィードに対応
+    // RDFの場合、'rdf:RDF' の下に 'item' があることを確認
     console.log("Parsed RSS result:", result);
 
-    // RDFの場合、'rdf:RDF' の下に 'channel' があることを確認
     if (result['rdf:RDF'] && result['rdf:RDF'][0] && result['rdf:RDF'][0].item) {
       const items = result['rdf:RDF'][0].item;
 
-      console.log("Found items. Filtering Korean news...");
+      console.log("Found items. Checking the structure of each item...");
+
+      // itemsの中身を確認
+      items.forEach((item, index) => {
+        console.log(`Item ${index}:`, item);
+      });
 
       // 韓国に関連するニュースをフィルタリング（タイトルに「韓国」を含むもの）
-      articles = items.filter(item => item.title[0].includes("韓国"));
+      articles = items.filter(item => item.title && item.title[0].includes("韓国"));
 
       console.log(`${articles.length} articles found related to "韓国".`);
     } else {
